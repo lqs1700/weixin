@@ -1,0 +1,40 @@
+<view class="dia-input">
+  <input class="dianumber" maxlength="13" placeholder="请输入接入号" />
+</view>
+
+<view class="flux-box">
+  <view class="flux-item {{fluxItem==1?'selected':''}}" bindtap="onFluxItemTap" data-id="1">
+    <text class="flux-flux">1G</text>
+    <text class="flux-price">5.00元</text>
+    <view class="line">
+      <text class="flux-describe">有效期一个月，到帐生效</text>
+    </view>
+  </view>
+  <view class="flux-item {{fluxItem==2?'selected':''}}"  bindtap="onFluxItemTap" data-id="2">
+    <text class="flux-flux">3G</text>
+    <text class="flux-price">9.9元</text>
+    <view class="line">
+      <text class="flux-describe">有效期一个月，到帐生效</text>
+    </view>
+  </view>
+</view>
+<view class='flux-box'>
+  <view class="flux-item {{fluxItem==3?'selected':''}}"  bindtap="onFluxItemTap" data-id="3">
+    <text class="flux-flux">15G</text>
+    <text class="flux-price">99元</text>
+    <view class="line">
+      <text class="flux-describe">有效期一个月，到帐生效</text>
+    </view>
+  </view>
+  <view class="flux-item {{fluxItem==4?'selected':''}}"  bindtap="onFluxItemTap" data-id="4">
+    <text class="flux-flux">年包</text>
+    <text class="flux-price">399元</text>
+    <view class="line">
+      <text class="flux-describe">有效期一个月，到帐生效</text>
+    </view>
+  </view>
+</view>
+
+<view class="bot">
+  <button>立 即 购 买</button>
+</view>

@@ -1,0 +1,50 @@
+<view>
+  <swiper indicator-dots="true" autoplay="true" duration="{{duration}}">
+    <block wx:for="{{bannerArr}}">
+      <swiper-item class="banner-item" bindtap="onBannerItemTap" data-id="{{item.key_word}}">
+        <image src="{{item.img.url}}" class="item-image" width="355" height="150" />
+      </swiper-item>
+    </block>
+  </swiper>
+
+  <view class="category-box">
+    <block wx:for="{{categoryArr}}">
+      <view wx:if="{{index<=3}}" class="category-item small" bindtap="onCategoryItemTap" data-id="{{item.id}}" data-name="{{item.name}}" >
+        <view class="category-item">
+          <image src="{{item.img.url}}" class="item-image" width="355" height="150" />
+          <view class="category-text">{{item.name}}</view>
+        </view>
+      </view>
+      <view wx:else class="category-item category-else" bindtap="onCategoryItemTap" data-id="{{item.id}}" data-name="{{item.name}}" >
+        <image src="{{item.img.url}}" class="item-image" width="355" height="150" />
+      </view>
+    </block>
+  </view>
+
+  <view class="theme-box">
+    <block wx:for="{{themeArr}}">
+      <view class="theme-item" bindtap="onThemeItemTap" data-id="{{item.id}}">
+        <image src="{{item.topic_img.url}}" class="theme-image" />
+      </view>
+    </block>
+  </view>
+
+  <view class="hot-box">
+    <view class="hot-device">
+      <text class="line">———</text>
+      <text class="hot-theme">热门车机</text>
+      <text class="line">———</text>
+    </view>
+
+    <block wx:for="{{productsArr}}">
+      <view class="product-item"  bindtap="onHotItemTap" data-id="{{item.id}}">
+        <image src="{{item.main_image_url}}" class="product-image" />
+        <view class="hot-text">
+          <text class="hot-title">{{item.name}}</text>
+          <text class="hot-desc">手机互联    语音助手    安全辅助    4G网络</text>
+          <text class="hot-price">￥{{item.price}}</text>
+        </view>
+      </view>
+    </block>
+  </view>
+</view>

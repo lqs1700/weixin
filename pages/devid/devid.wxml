@@ -1,0 +1,36 @@
+<view class="devid-box">
+
+  <view class="left">
+    <scroll-view class="devid-left" scroll-y style="height:1200rpx;">
+      <block wx:for="{{proSerious}}">
+        <view class="theme-item {{serious_id==item.id?'selected':''}}" bindtap="onSeriousTap" data-id="{{item.id}}">
+          <text class="left-text">{{item.name}}</text>
+        </view>
+      </block>
+    </scroll-view>
+  </view>
+
+  <view class="right">
+    <view class="devid-right">
+      <view class="right-version">
+        <text class="choise">选择版本</text>
+        <view class="right-top">
+          <block wx:for="{{proVersions}}">
+            <view class="theme-item {{version_id==item.id?'selected':''}}" bindtap="onVersionTap" data-id="{{item.id}}">
+              <text class="version-name">{{item.name}}</text>
+            </view>
+          </block>
+        </view>
+      </view>
+
+      <scroll-view class="right-bottom" scroll-y style="height:950rpx;">
+        <block wx:for="{{productArr}}">
+          <view class="theme-item" bindtap="onProductDetailTap" data-id="{{item.id}}">
+            <image src="{{item.main_image_url}}" />
+            <text>{{item.name}}</text>
+          </view>
+        </block>
+      </scroll-view>
+    </view>
+  </view>
+</view>

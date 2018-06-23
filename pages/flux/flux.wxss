@@ -1,0 +1,78 @@
+.dia-input {
+  padding: 10rpx 20rpx;
+  margin-bottom: 30rpx;
+}
+
+.dianumber {
+  background-color: #efefef;
+  padding: 12rpx 50rpx;
+  font-size: 30rpx;
+  text-align: center;
+  border-radius: 40rpx;
+}
+
+.bot {
+  position: fixed;
+  bottom: 0;
+  width: 100%;
+}
+
+.bot button {
+  border: none;
+  border-radius: 0;
+  background-color: #e6272a;
+  color: white;
+}
+
+.flux-box{
+  display: flex;
+  align-items: center;
+  padding: 0 15rpx;
+}
+
+.flux-item{
+  width: 350rpx;
+  height: 180rpx;
+  border: 1px solid #f5a623;
+  border-radius: 25rpx;
+  margin:28rpx 15rpx 0 15rpx;
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  color: #f5a623;
+}
+
+.flux-flux{
+margin-top:15rpx;
+}
+
+.flux-price{
+  font-size: 30rpx;
+  margin-top: 5rpx;
+}
+
+.flux-describe{
+  font-size: 24rpx;
+  color: #979797;
+}
+
+.line{
+  margin-top: 10rpx;
+  border-top: 1px solid #979797;
+}
+
+.selected{
+  background-color:#f5a623;
+}
+
+.selected text{
+  color: white;
+}
+
+.selected .line{
+  border-top: 1px solid white;
+}
+
+.selected .flux-describe{
+  color: #fdedd3;
+}

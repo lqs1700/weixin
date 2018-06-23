@@ -1,0 +1,7 @@
+.insurance-box{
+  padding: 15rpx 25rpx;
+}
+.insurance-image{
+  width: 100%;height: 300rpx;
+  margin-top: 15rpx;
+}

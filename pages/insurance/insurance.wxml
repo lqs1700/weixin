@@ -1,0 +1,5 @@
+<view class="insurance-box">
+  <block wx:for="{{insuranceArr.data}}">
+    <image src="{{item.main_image_url}}" class="insurance-image" />
+  </block>
+</view>

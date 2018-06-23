@@ -1,0 +1,104 @@
+page {
+  display: block;
+  min-height: 100%;
+  background-color: #eee;
+  padding-top: 15rpx;
+}
+
+.left {
+  display: block;
+  height: 100%;
+}
+
+.devid-left {
+  float: left;
+  width: 23%;
+  text-align: center;
+  height: 100%;
+  margin-right: 2%;
+   background-color: white;
+}
+
+.left-text {
+  font-size: 26rpx;
+  line-height: 32rpx;
+}
+
+.devid-right {
+  float: left;
+  width: 75%;
+  text-align: center;
+}
+
+.right-version {
+  background-color: white;
+  margin-bottom: 20rpx;
+  padding-bottom: 20rpx;
+}
+
+.right-top {
+  padding: 0 40rpx;
+  display: block;
+  overflow-wrap: break-word;
+  text-align: left;
+}
+
+.right-top .theme-item {
+  display: inline-block;
+}
+
+.choise {
+  font-size: 28rpx;
+  margin-right: 360rpx;
+  background-color: white;
+}
+
+.right-top .version-name {
+  margin-top: 30rpx;
+  display: inline-block;
+  text-align: center;
+  font-size: 30rpx;
+  width: 100rpx;
+  margin-right: 17rpx;
+  border: 1px solid red;
+  border-radius: 20rpx;
+  color: red;
+}
+
+.right-bottom {
+  display: block;
+  overflow-wrap: break-word;
+  text-align: left;
+  margin-top: 20rpx;
+  height: 980rpx;
+  background-color: white;
+  padding-bottom: 10rpx;
+}
+
+.right-bottom .theme-item {
+  display: inline-block;
+  width: 280rpx;
+  margin: 0 auto;
+  margin-top: 40rpx;
+  text-align:center;
+}
+
+.right-bottom .theme-item text {
+  font-size: 30rpx;
+}
+
+.right-bottom .theme-item image {
+  display: block;
+  width: 200rpx;
+  height: 140rpx;
+  margin: 0 auto;
+}
+
+.right-top .selected text{
+  background: red;
+  color: white;
+}
+
+.devid-left .selected{
+  background: #eeeeee;
+}
