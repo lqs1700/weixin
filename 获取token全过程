@@ -1,0 +1,170 @@
+微信端
+
+调用微信登陆接口，通过code获取token
+
+#tokenUrl,服务端编写的获取接口地址，
+
+getTokenFromServer(callBack) {
+  var that = this;
+  wx.login({
+    success: function (res) {
+      wx.request({
+        url: that.tokenUrl,
+        method: 'POST',
+        data: {
+          code: res.code
+        },
+        success: function (res) {
+          wx.setStorageSync('token', res.data.token);
+          callBack && callBack(res.data.token);
+        }
+      })
+    }
+  })
+}
+
+php服务器端面：
+
+1.通过code获取token方法
+public function getToken($code='')
+{
+    (new TokenGet())->goCheck();    //code验证
+    $wx = new UserToken($code);     //调用token具体实现类
+    $token = $wx->get();            //实例化类获取token
+    return [
+        'token' => $token
+    ];
+}
+
+2.service层usertoken类具体代码
+
+<?php
+namespace app\api\service;
+use app\api\model\User;
+use app\lib\enum\ScopeEnum;
+use app\lib\exception\TokenException;
+use app\lib\exception\WeChatException;
+use think\Exception;
+use think\Model;
+
+
+class UserToken extends Token
+{
+    protected $code;
+    protected $wxLoginUrl;
+    protected $wxAppID;
+    protected $wxAppSecret;
+    
+    //构造函数，获取配置参数
+    function __construct($code)
+    {
+        $this->code = $code;
+        $this->wxAppID = config('wx.app_id');
+        $this->wxAppSecret = config('wx.app_secret');
+        $this->wxLoginUrl = sprintf(
+            config('wx.login_url'), $this->wxAppID, $this->wxAppSecret, $this->code);
+    }
+    //获取token方法
+    public function get()
+    {
+        $result = curl_get($this->wxLoginUrl);
+        $wxResult = json_decode($result, true);
+        if (empty($wxResult)){
+            throw new Exception('获取session_key及openID时异常，微信内部错误');
+        }else {
+            $loginFail = array_key_exists('errcode', $wxResult);
+            if ($loginFail) {
+                $this->processLoginError($wxResult);
+            }
+            else {
+                return $this->grantToken($wxResult);
+            }
+        }
+    }
+
+    // 处理微信登陆异常
+    private function processLoginError($wxResult)
+    {
+        throw new WeChatException(
+            [
+                'msg' => $wxResult['errmsg'],
+                'errorCode' => $wxResult['errcode']
+            ]);
+    }
+
+    // 写入缓存
+    private function saveToCache($wxResult)
+    {
+        $key = self::generateToken();       //生成token的键，key
+        $value = json_encode($wxResult);
+        $expire_in = config('setting.token_expire_in');
+        $result = cache($key, $value, $expire_in);
+
+        if (!$result){
+            throw new TokenException([
+                'msg' => '服务器缓存异常',
+                'errorCode' => 10005
+            ]);
+        }
+        return $key;
+    }
+
+    // 颁发令牌,返回最终token
+    private function grantToken($wxResult){
+        $openid = $wxResult['openid'];
+        $user = User::getByOpenID($openid);
+        if (!$user){
+            $uid = $this->newUser($openid);
+        }
+        else {
+            $uid = $user->id;
+        }
+        $cachedValue = $this->prepareCachedValue($wxResult, $uid);
+        $token = $this->saveToCache($cachedValue);
+        return $token;
+    }
+
+    //构造token对应的value值
+    private function prepareCachedValue($wxResult, $uid)
+    {
+        $cachedValue = $wxResult;
+        $cachedValue['uid'] = $uid;
+        $cachedValue['scope'] = ScopeEnum::User;
+        return $cachedValue;
+    }
+
+    // 创建新用户
+    private function newUser($openid){
+        $user = User::create(
+            [
+                'openid' => $openid
+            ]);
+        return $user->id;
+    }
+}
+
+3.调用的其他方法
+
+// 生成key令牌
+public static function generateToken()
+{
+    $randChar = getRandChar(32);
+    $timestamp = $_SERVER['REQUEST_TIME_FLOAT'];
+    $tokenSalt = config('secure.token_salt');
+    return md5($randChar . $timestamp . $tokenSalt);
+}
+
+//微信用户是否存在，存在返回uid，不存在返回0
+public static function getByOpenID($openid)
+{
+  $user = User::where('openid', '=', $openid)
+      ->find();
+  return $user;
+}
+
+//权限
+class ScopeEnum
+{
+    const User = 16;
+    const Super = 32;
+}
