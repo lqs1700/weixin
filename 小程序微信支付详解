@@ -1,0 +1,263 @@
+*****************************           表示调用函数
+1.微信端
+
+/*下单和付款*/
+pay: function () {
+  if (!this.data.addressInfo) {
+    this.showTips('下单提示', '请填写您的收货地址');
+    return;
+  }
+  
+  if (this.data.orderStatus == 0) {
+    this._firstTimePay();
+  } else {
+    this._oneMoresTimePay();
+  }
+},
+
+_firstTimePay: function () {                                                            *****************************
+    var orderInfo = [],
+      procuctInfo = this.data.productsArr,      //productsArr从缓存获取
+      order = new Order();
+    for (let i = 0; i < procuctInfo.length; i++) {
+      orderInfo.push({
+        product_id: procuctInfo[i].id,
+        count: procuctInfo[i].counts
+      });
+    }
+
+    var that = this;
+    //支付分两步，第一步是生成订单号，然后根据订单号支付
+    order.doOrder(orderInfo, (data) => {                                               *****************************
+      //订单生成成功
+      if (data.pass) {
+        //更新订单状态
+        var id = data.order_id;
+        that.data.id = id;
+        that.data.fromCartFlag = false;
+
+        //开始支付
+        that._execPay(id);                                                            *****************************
+      } else {
+        that._orderFail(data);  // 下单失败
+      }
+    });
+  },
+  
+/*下订单*/
+doOrder(param, callback) {                                                            *****************************
+  var that = this;
+  var allParams = {
+    url: 'order',
+    type: 'post',
+    data: { products: param },
+    sCallback: function (data) {
+      that.execSetStorageSync(true);
+      callback && callback(data);
+    },
+    eCallback: function () {
+    }
+  };
+  this.request(allParams);
+}
+  
+//开始支付
+_execPay: function (id) {
+if (!order.onPay) {
+  this.showTips('支付提示', '本产品仅用于演示，支付系统已屏蔽', true);//屏蔽支付，提示
+  this.deleteProducts(); //将已经下单的商品从购物车删除
+  return;
+}
+var that = this;
+order.execPay(id, (statusCode) => {                                                 *****************************
+  if (statusCode != 0) {
+    that.deleteProducts(); //将已经下单的商品从购物车删除   当状态为0时，表示
+
+    var flag = statusCode == 2;
+    wx.navigateTo({
+      url: '../pay-result/pay-result?id=' + id + '&flag=' + flag + '&from=order'
+    });
+  }
+});
+},
+
+/*
+* 拉起微信支付
+* params:
+* norderNumber - {int} 订单id
+* return：
+* callback - {obj} 回调方法 ，返回参数 可能值 0:商品缺货等原因导致订单不能支付;  1: 支付失败或者支付取消； 2:支付成功；
+* */
+execPay(orderNumber, callback) {
+  var allParams = {
+    url: 'pay/pre_order',
+    type: 'post',
+    data: { id: orderNumber },
+    sCallback: function (data) {
+      var timeStamp = data.timeStamp;
+      if (timeStamp) { //可以支付
+        wx.requestPayment({
+          'timeStamp': timeStamp.toString(),
+          'nonceStr': data.nonceStr,
+          'package': data.package,
+          'signType': data.signType,
+          'paySign': data.paySign,
+          success: function () {
+            callback && callback(2);
+          },
+          fail: function () {
+            callback && callback(1);
+          }
+        });
+      } else {
+        callback && callback(0);
+      }
+    }
+  };
+  this.request(allParams);
+}
+
+2.php后端
+
+//下单控制器层
+public function placeOrder()
+  {
+      (new OrderPlace())->goCheck();
+      $products = input('post.products/a');
+      $uid = Token::getCurrentUid();
+      $order = new OrderService();
+      $status = $order->place($uid, $products); 
+      return $status;
+  }
+  
+//下单service层
+public function place($uid, $oProducts)
+  {
+      $this->oProducts = $oProducts;
+      $this->products = $this->getProductsByOrder($oProducts);
+      $this->uid = $uid;
+      $status = $this->getOrderStatus();
+      if (!$status['pass']) {
+          $status['order_id'] = -1;
+          return $status;
+      }
+
+      $orderSnap = $this->snapOrder();
+      $status = self::createOrderByTrans($orderSnap);
+      $status['pass'] = true;
+      return $status;
+  }
+  
+  //创建订单
+private function createOrderByTrans($snap)
+  {
+      try {
+          $orderNo = $this->makeOrderNo();
+          $order = new OrderModel();
+          $order->user_id = $this->uid;
+          $order->order_no = $orderNo;
+          $order->total_price = $snap['orderPrice'];
+          $order->total_count = $snap['totalCount'];
+          $order->snap_img = $snap['snapImg'];
+          $order->snap_name = $snap['snapName'];
+          $order->snap_address = $snap['snapAddress'];
+          $order->snap_items = json_encode($snap['pStatus']);
+          $order->save();
+
+          $orderID = $order->id;
+          $create_time = $order->create_time;
+
+          foreach ($this->oProducts as &$p) {
+              $p['order_id'] = $orderID;
+          }
+          $orderProduct = new OrderProduct();
+          $orderProduct->saveAll($this->oProducts);
+          return [
+              'order_no' => $orderNo,
+              'order_id' => $orderID,
+              'create_time' => $create_time
+          ];
+      } catch (Exception $ex) {
+          throw $ex;
+      }
+  }
+  
+//预支付
+ public function getPreOrder($id='')
+{
+    (new IDMustBePositiveInt()) -> goCheck();
+    $pay= new PayService($id);
+    return $pay->pay();
+}
+  
+//支付  
+public function pay()
+{
+    $this->checkOrderValid();
+    $order = new Order();
+    $status = $order->checkOrderStock($this->orderID);
+    if (!$status['pass'])
+    {
+        return $status;
+    }
+    return $this->makeWxPreOrder($status['orderPrice']);
+    //        $this->checkProductStock();
+}
+
+// 构建微信支付订单信息
+private function makeWxPreOrder($totalPrice)
+{
+    $openid = Token::getCurrentTokenVar('openid');
+
+    if (!$openid)
+    {
+        throw new TokenException();
+    }
+    $wxOrderData = new \WxPayUnifiedOrder();
+    $wxOrderData->SetOut_trade_no($this->orderNo);
+    $wxOrderData->SetTrade_type('JSAPI');
+    $wxOrderData->SetTotal_fee($totalPrice * 100);
+    $wxOrderData->SetBody('零食商贩');
+    $wxOrderData->SetOpenid($openid);
+    $wxOrderData->SetNotify_url(config('https://www.qq.com'));
+
+    return $this->getPaySignature($wxOrderData);
+}
+
+//向微信请求订单号并生成签名
+private function getPaySignature($wxOrderData)
+{
+    $wxOrder = \WxPayApi::unifiedOrder($wxOrderData);
+    // 失败时不会返回result_code
+    if($wxOrder['return_code'] != 'SUCCESS' || $wxOrder['result_code'] !='SUCCESS'){
+        Log::record($wxOrder,'error');
+        Log::record('获取预支付订单失败','error');
+    // throw new Exception('获取预支付订单失败');
+    }
+    $this->recordPreOrder($wxOrder);
+    $signature = $this->sign($wxOrder);
+    return $signature;
+}
+
+private function recordPreOrder($wxOrder){
+    // 必须是update，每次用户取消支付后再次对同一订单支付，prepay_id是不同的
+    OrderModel::where('id', '=', $this->orderID)
+        ->update(['prepay_id' => $wxOrder['prepay_id']]);
+}
+
+// 签名
+private function sign($wxOrder)
+{
+    $jsApiPayData = new \WxPayJsApiPay();
+    $jsApiPayData->SetAppid(config('wx.app_id'));
+    $jsApiPayData->SetTimeStamp((string)time());
+    $rand = md5(time() . mt_rand(0, 1000));
+    $jsApiPayData->SetNonceStr($rand);
+    $jsApiPayData->SetPackage('prepay_id=' . $wxOrder['prepay_id']);
+    $jsApiPayData->SetSignType('md5');
+    $sign = $jsApiPayData->MakeSign();
+    $rawValues = $jsApiPayData->GetValues();
+    $rawValues['paySign'] = $sign;
+    unset($rawValues['appId']);
+    return $rawValues;
+}
