@@ -92,23 +92,6 @@ class UserToken extends Token
             ]);
     }
 
-    // 写入缓存
-    private function saveToCache($wxResult)
-    {
-        $key = self::generateToken();       //生成token的键，key
-        $value = json_encode($wxResult);
-        $expire_in = config('setting.token_expire_in');
-        $result = cache($key, $value, $expire_in);
-
-        if (!$result){
-            throw new TokenException([
-                'msg' => '服务器缓存异常',
-                'errorCode' => 10005
-            ]);
-        }
-        return $key;
-    }
-
     // 颁发令牌,返回最终token
     private function grantToken($wxResult){
         $openid = $wxResult['openid'];
@@ -124,6 +107,22 @@ class UserToken extends Token
         return $token;
     }
 
+ // 写入缓存
+    private function saveToCache($wxResult){
+        $key = self::generateToken();       //生成token的键，key
+        $value = json_encode($wxResult);
+        $expire_in = config('setting.token_expire_in');
+        $result = cache($key, $value, $expire_in);
+
+        if (!$result){
+            throw new TokenException([
+                'msg' => '服务器缓存异常',
+                'errorCode' => 10005
+            ]);
+        }
+        return $key;
+    }
+    
     //构造token对应的value值
     private function prepareCachedValue($wxResult, $uid)
     {
